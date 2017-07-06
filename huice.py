@@ -19,15 +19,20 @@ input_path = 'D:/trading_data/stock data/'
 output_file = 'D:/googledrive/stock/quant/gushequ_chaoduan/code_selection/result.csv'
 
 cost = 1.5/1000
-rate = 8.4/100
+rate1 = 8.4/100
+rate2 = 6/100
 
-def profit(x,rate):
+def profit(x,rate1, rate2):
+    high_rate = max(rate1, rate2)
+    low_rate = min(rate1, rate2)
     if (x['date+1_open_qfq'] / x['close_qfq'] - 1 >= 9.9/100) and (x['date+1_high_qfq'] == x['date+1_low_qfq']):
         return 0
-    elif x['date+2_high_qfq'] / x['date+1_close_qfq'] - 1 >= rate:
-        return x['date+1_close_qfq'] * (1 + rate) / x['date+1_open_qfq'] - 1 - cost
-    else:
+    elif x['date+2_high_qfq'] / x['date+1_close_qfq'] - 1 >= high_rate:
+        return (x['date+1_close_qfq'] * (1 + high_rate) / x['date+1_open_qfq'] + x['date+1_close_qfq'] * (1 + low_rate) / x['date+1_open_qfq'] ) / 2 - 1 - cost
+    elif x['date+2_high_qfq'] / x['date+1_close_qfq'] - 1 < low_rate:
         return x['date+2_close_qfq'] / x['date+1_open_qfq'] - 1 - cost
+    else:
+        return (x['date+1_close_qfq'] * (1 + low_rate) / x['date+1_open_qfq'] + x['date+2_close_qfq'] / x['date+1_open_qfq'] ) / 2 - 1 - cost
 
 req_cols = ('code', 'date', 'open', 'high', 'low', 'close', 'volume', 'adjust_price_f')
 
@@ -110,8 +115,8 @@ def code_selection(file_name):
     ,:]
                 
     if not code_selection_result.empty:
-        code_selection_result.loc[:,'profit_8.4'] = code_selection_result.apply(lambda x: profit(x,rate), axis=1)
-
+        code_selection_result.loc[:,'profit_8.4'] = code_selection_result.apply(lambda x: profit(x,rate1, rate1), axis=1)
+        code_selection_result.loc[:,'profit_6_8.4'] = code_selection_result.apply(lambda x: profit(x,rate1, rate2), axis=1)
     return code_selection_result    
     
 if __name__ == '__main__':
